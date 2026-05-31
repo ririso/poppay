@@ -10,6 +10,18 @@ build/
 .env
 .env*.local
 
+# testing
+coverage/
+.nyc_output/
+.env.test
+
 # misc
 .DS_Store
 *.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

@@ -8,7 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "repository": {
     "type": "git",
@@ -27,32 +31,39 @@
   },
   "homepage": "https://github.com/ririso/poppay#readme",
   "dependencies": {
-    "next": "^16.2.6",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
+    "@hookform/resolvers": "^3.3.0",
     "@paypayopa/paypayopa-sdk-node": "^2.1.0",
     "@supabase/supabase-js": "^2.106.2",
-    "zod": "^3.22.0",
-    "react-hook-form": "^7.48.0",
-    "@hookform/resolvers": "^3.3.0",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.0.0",
+    "next": "^16.2.6",
     "qrcode": "^1.5.4",
-    "uuid": "^14.0.0"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-hook-form": "^7.48.0",
+    "tailwind-merge": "^2.0.0",
+    "uuid": "^14.0.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@types/qrcode": "^1.5.6",
     "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.5.0",
     "eslint": "^10.4.1",
     "eslint-config-next": "^16.2.6",
-    "tailwindcss": "^3.4.19",
-    "autoprefixer": "^10.5.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "postcss": "^8.5.15",
     "prettier": "^3.1.0",
-    "prettier-plugin-tailwindcss": "^0.5.0"
+    "prettier-plugin-tailwindcss": "^0.5.0",
+    "tailwindcss": "^3.4.19",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
   }
 }
