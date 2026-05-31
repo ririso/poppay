@@ -43,8 +43,7 @@ export async function GET(request: NextRequest) {
       status: paymentData.status,
       amount: paymentData.amount,
       orderDescription: paymentData.orderDescription,
-      requestedAt: paymentData.requestedAt,
-      assumeMerchantReceiveTime: paymentData.assumeMerchantReceiveTime,
+      acceptedAt: paymentData.acceptedAt,
     });
 
   } catch (error) {

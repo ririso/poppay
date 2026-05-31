@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate QR code image
-    const qrCodeData = paypayResponse.data.codeUrl;
+    const qrCodeData = paypayResponse.data.url;
     const qrCodeImage = await QRCode.toDataURL(qrCodeData, {
       errorCorrectionLevel: 'M',
       margin: 1,
