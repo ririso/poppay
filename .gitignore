@@ -6,6 +6,9 @@ node_modules/
 out/
 build/
 
+# typescript build artifacts
+*.tsbuildinfo
+
 # env files（APIキーはここ）
 .env
 .env*.local
@@ -13,3 +16,11 @@ build/
 # misc
 .DS_Store
 *.log
+
+# temporary files
+*.tatk
+.takt/
+
+# backup files
+*.backup
+

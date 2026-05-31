@@ -1,0 +1,51 @@
+{
+  "name": "poppay",
+  "version": "1.0.0",
+  "description": "PayPay extension payment web application",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ririso/poppay.git"
+  },
+  "keywords": [
+    "paypay",
+    "payment",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ririso/poppay/issues"
+  },
+  "homepage": "https://github.com/ririso/poppay#readme",
+  "dependencies": {
+    "@paypayopa/paypayopa-sdk-node": "^2.1.0",
+    "@supabase/supabase-js": "^2.106.2",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^10.4.1",
+    "eslint-config-next": "^16.2.6",
+    "next": "^16.2.6",
+    "postcss": "^8.5.15",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^6.0.3",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "@types/uuid": "^10.0.0"
+  }
+}
