@@ -4,7 +4,7 @@ import { z } from 'zod'
 describe('Validation Schemas', () => {
   describe('createPaymentSchema', () => {
     describe('amount validation', () => {
-      it('should accept valid positive amounts', () => {
+      it('should accept valid positive integer amounts', () => {
         const validData = { amount: 100, description: 'Test payment' }
         const result = createPaymentSchema.safeParse(validData)
         expect(result.success).toBe(true)
@@ -46,6 +46,15 @@ describe('Validation Schemas', () => {
         }
       })
 
+      it('should reject non-integer amounts', () => {
+        const invalidData = { amount: 100.5, description: 'Decimal amount' }
+        const result = createPaymentSchema.safeParse(invalidData)
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.errors[0].message).toBe('金額は整数で入力してください')
+        }
+      })
+
       it('should reject non-numeric amounts', () => {
         const invalidData = { amount: '100', description: 'String amount' }
         const result = createPaymentSchema.safeParse(invalidData)
@@ -63,38 +72,30 @@ describe('Validation Schemas', () => {
         }
       })
 
-      it('should accept descriptions up to 256 characters', () => {
-        const longDescription = 'a'.repeat(256)
-        const validData = { amount: 100, description: longDescription }
+      it('should use default description when not provided', () => {
+        const validData = { amount: 100 }
         const result = createPaymentSchema.safeParse(validData)
         expect(result.success).toBe(true)
-      })
-
-      it('should reject empty descriptions', () => {
-        const invalidData = { amount: 100, description: '' }
-        const result = createPaymentSchema.safeParse(invalidData)
-        expect(result.success).toBe(false)
-        if (!result.success) {
-          expect(result.error.errors[0].message).toBe('説明文を入力してください')
+        if (result.success) {
+          expect(result.data.description).toBe('PayPay決済')
         }
       })
 
-      it('should reject descriptions over 256 characters', () => {
-        const tooLongDescription = 'a'.repeat(257)
-        const invalidData = { amount: 100, description: tooLongDescription }
-        const result = createPaymentSchema.safeParse(invalidData)
-        expect(result.success).toBe(false)
-        if (!result.success) {
-          expect(result.error.errors[0].message).toBe('説明文は256文字以下で入力してください')
+      it('should use default description when empty string provided', () => {
+        const validData = { amount: 100, description: '' }
+        const result = createPaymentSchema.safeParse(validData)
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.description).toBe('PayPay決済')
         }
       })
 
-      it('should reject missing description field', () => {
-        const invalidData = { amount: 100 }
-        const result = createPaymentSchema.safeParse(invalidData)
-        expect(result.success).toBe(false)
-        if (!result.success) {
-          expect(result.error.errors[0].path).toContain('description')
+      it('should accept optional description field', () => {
+        const validData = { amount: 100, description: '30分延長料金' }
+        const result = createPaymentSchema.safeParse(validData)
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.description).toBe('30分延長料金')
         }
       })
     })
@@ -109,20 +110,31 @@ describe('Validation Schemas', () => {
         }
       })
 
-      it('should reject data with missing required fields', () => {
-        const invalidData = {}
+      it('should handle data with only amount (description optional)', () => {
+        const validData = { amount: 500 }
+        const result = createPaymentSchema.safeParse(validData)
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.amount).toBe(500)
+          expect(result.data.description).toBe('PayPay決済')
+        }
+      })
+
+      it('should reject data with missing required amount field', () => {
+        const invalidData = { description: 'Test payment' }
         const result = createPaymentSchema.safeParse(invalidData)
         expect(result.success).toBe(false)
         if (!result.success) {
-          expect(result.error.errors).toHaveLength(2) // amount and description errors
+          expect(result.error.errors).toHaveLength(1) // only amount error
+          expect(result.error.errors[0].path).toContain('amount')
         }
       })
 
       it('should reject data with extra fields', () => {
-        const dataWithExtra = { 
-          amount: 100, 
-          description: 'Test', 
-          extraField: 'should be stripped' 
+        const dataWithExtra = {
+          amount: 100,
+          description: 'Test',
+          extraField: 'should be stripped'
         }
         const result = createPaymentSchema.safeParse(dataWithExtra)
         expect(result.success).toBe(true)
