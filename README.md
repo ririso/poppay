@@ -1,1 +1,249 @@
-# poppay
+# PopPay - PayPay延長料金支払いWebアプリ
+
+## プロジェクト概要
+
+PopPayは、カウンセリングなどの延長料金をその場でPayPayで支払ってもらうためのWebアプリケーションです。管理者が金額を入力してQRコードを生成し、顧客がPayPayアプリで読み取って支払いを実行する、シンプルで効率的な決済システムです。
+
+### 決済フロー
+
+```
+① 管理者が金額を入力
+        ↓
+② PayPayのQRコードが生成される
+        ↓
+③ 支払いユーザーがPayPayアプリでQRを読み取る
+        ↓
+④ ユーザーが支払いを実行
+        ↓
+⑤ 管理者画面に「支払い完了」が反映される
+```
+
+## 技術スタック
+
+| 技術領域 | 採用技術 | バージョン |
+|----------|----------|------------|
+| フレームワーク | Next.js (App Router) | ^16.2.6 |
+| 言語 | TypeScript | ^6.0.3 |
+| 決済API | PayPay OPA | @paypayopa/paypayopa-sdk-node ^2.1.0 |
+| データベース | Supabase (PostgreSQL) | ^2.106.2 |
+| QRコード生成 | qrcode | ^1.5.4 |
+| スタイリング | Tailwind CSS | ^3.4.19 |
+| フォーム管理 | React Hook Form + Zod | ^7.48.0 + ^3.22.0 |
+| テストフレームワーク | Jest + Testing Library | ^30.4.2 |
+| ホスティング | Vercel (予定) | - |
+
+## プロジェクト構成
+
+```
+poppay/
+├── src/
+│   ├── app/                      # Next.js App Router
+│   │   ├── layout.tsx           # ルートレイアウト
+│   │   ├── page.tsx             # メインページ（管理者画面）
+│   │   └── api/                 # API Routes
+│   │       ├── payments/
+│   │       │   ├── create-qr/   # QRコード生成API
+│   │       │   └── status/      # 支払い状況確認API
+│   │       └── webhook/         # PayPay Webhook受信
+│   ├── lib/                     # ビジネスロジック
+│   │   ├── paypay.ts           # PayPay SDK連携
+│   │   ├── supabase.ts         # Supabase クライアント
+│   │   └── validations.ts      # バリデーションスキーマ
+│   ├── types/                   # TypeScript型定義
+│   │   ├── paypay.ts           # PayPay関連型
+│   │   ├── database.ts         # データベース型
+│   │   └── transaction.ts      # 取引関連型
+│   └── __tests__/              # テストファイル
+│       ├── lib/                # ライブラリテスト
+│       ├── api/                # APIテスト
+│       └── __mocks__/          # モックファイル
+├── 開発指針.md                   # 技術選定・実装方針
+├── TDD_SETUP_SUMMARY.md         # テスト環境構築レポート
+├── package.json                # 依存関係・スクリプト
+├── jest.config.js              # Jestテスト設定
+├── tailwind.config.ts          # Tailwind CSS設定
+└── next.config.ts              # Next.js設定
+```
+
+## 主要機能
+
+### 現在実装済み
+- ✅ PayPay QRコード生成
+- ✅ 支払い状況のリアルタイム確認
+- ✅ Webhook受信による支払い完了通知
+- ✅ 取引履歴のデータベース保存
+- ✅ TDD対応のテスト環境
+
+### 開発中・予定
+- 🟡 管理者画面UI強化
+- 🟡 支払い履歴一覧画面
+- ⏳ 管理者認証機能
+- ⏳ 本番環境対応
+
+## セットアップ手順
+
+### 1. リポジトリクローン
+
+```bash
+git clone https://github.com/ririso/poppay.git
+cd poppay
+```
+
+### 2. 依存関係インストール
+
+```bash
+npm install
+```
+
+### 3. 環境変数設定
+
+`.env.local` ファイルを作成し、以下の環境変数を設定してください：
+
+```env
+# PayPay Settings (Sandbox)
+PAYPAY_API_KEY=your_sandbox_api_key
+PAYPAY_API_SECRET=your_sandbox_api_secret
+PAYPAY_MERCHANT_ID=your_sandbox_merchant_id
+
+# Supabase Settings
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Application Settings
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. データベースセットアップ
+
+Supabaseプロジェクトを作成し、以下のテーブルを作成してください：
+
+```sql
+-- 取引テーブル
+CREATE TABLE transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    tenant_id UUID, -- SaaS化用（現在は固定値）
+    merchant_payment_id TEXT UNIQUE NOT NULL,
+    amount INTEGER NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'CREATED',
+    paypay_code_id TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    paid_at TIMESTAMPTZ
+);
+```
+
+## 利用可能なコマンド
+
+### 開発
+```bash
+# 開発サーバー起動
+npm run dev
+
+# 型チェック
+npm run type-check
+
+# リント
+npm run lint
+```
+
+### テスト
+```bash
+# 全テスト実行
+npm test
+
+# ウォッチモード
+npm run test:watch
+
+# カバレッジレポート
+npm run test:coverage
+
+# CI用（カバレッジ付き）
+npm run test:ci
+```
+
+### ビルド・デプロイ
+```bash
+# 本番用ビルド
+npm run build
+
+# 本番サーバー起動
+npm start
+```
+
+## セキュリティ考慮事項
+
+### APIキー管理
+- PayPay APIキーは絶対にフロントエンドに露出させない
+- 環境変数で管理し、`.env.local`は`.gitignore`に含める
+- 本番環境では適切なシークレット管理サービスを使用
+
+### Webhook セキュリティ
+- PayPay IPホワイトリストの設定を推奨
+- Webhook受信時の署名検証を実装予定
+- リクエストタイムアウト（2秒）内での応答確保
+
+### 認証・認可
+- 管理者画面への適切な認証機能（実装予定）
+- Supabase Row Level Security (RLS) の活用
+- CORS設定の適切な管理
+
+## 開発フェーズ状況
+
+### Phase 1 - Sandboxで動く最小版 ✅
+- [x] Next.jsプロジェクト作成
+- [x] 管理者画面（金額入力 → QR生成）
+- [x] APIルートでQRコード生成
+- [x] QRコードを画面表示
+- [x] 支払い完了検知（ポーリング + Webhook）
+- [x] 取引をSupabaseに保存
+- [x] TDDテストフレームワーク導入
+
+### Phase 2 - 堅牢化 🟡
+- [x] Webhook受信エンドポイント実装
+- [ ] PayPay IPホワイトリスト設定
+- [ ] 管理者画面に認証追加
+- [ ] 支払い履歴一覧
+- [ ] 本番環境APIキーへの切り替え
+
+### Phase 3 - SaaS化（将来構想） ⏳
+- [ ] マルチテナント化
+- [ ] 各事業者のPayPay加盟店情報登録
+- [ ] クレカ決済（Stripe）追加
+- [ ] 出品・在庫・売上管理
+
+## PayPay 決済方式
+
+本アプリケーションは **動的ユーザースキャン（Dynamic QR Code）** 方式を採用しています。
+
+- QRコード生成APIで動的なQRを生成
+- ユーザーがPayPayアプリで読み取り
+- その場での決済実行が可能
+- 管理画面でリアルタイム状況確認
+
+詳細な技術仕様については `開発指針.md` を参照してください。
+
+## 関連ドキュメント
+
+- [開発指針.md](./開発指針.md) - 技術選定と実装方針の詳細
+- [TDD_SETUP_SUMMARY.md](./TDD_SETUP_SUMMARY.md) - テスト環境構築レポート
+- [PayPay for Developers](https://developer.paypay.ne.jp/) - PayPay API公式ドキュメント
+- [Supabase Docs](https://supabase.com/docs) - Supabase公式ドキュメント
+
+## 想定コスト
+
+### 初期段階
+- PayPay決済手数料：加盟店契約の料率による
+- Supabase：無料枠で開始可能
+- Vercel：無料枠（Hobby）で開始可能
+- 独自ドメイン：年間1,000〜2,000円程度（任意）
+
+実質的にドメイン代のみで始められます。
+
+## ライセンス
+
+ISC
+
+## 作者・貢献者
+
+プロジェクト詳細については [GitHub Issues](https://github.com/ririso/poppay/issues) を確認してください。
