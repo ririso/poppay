@@ -33,11 +33,20 @@ describe('/api/payments/create-qr', () => {
       }
 
       const mockPayPayResponse = {
-        resultInfo: { code: 'SUCCESS', message: 'Success' },
+        resultInfo: {
+          code: 'SUCCESS',
+          message: 'Success',
+          codeId: 'test-code-id'
+        },
         data: {
           url: 'paypay://payment?code=test',
           merchantPaymentId: 'test-merchant-id',
           codeId: 'test-code-id',
+          deeplink: 'paypay://payment?code=test',
+          expiryDate: Date.now() + 300000,
+          amount: { amount: 1000, currency: 'JPY' },
+          orderDescription: 'Test payment',
+          codeType: 'ORDER_QR'
         },
         merchantPaymentId: 'test-merchant-id',
       }

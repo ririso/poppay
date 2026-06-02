@@ -1,3 +1,5 @@
+import { TransactionStatus } from './database'
+
 export interface Transaction {
   id: string
   tenant_id?: string
@@ -9,8 +11,6 @@ export interface Transaction {
   created_at: string
   paid_at?: string
 }
-
-export type TransactionStatus = 'CREATED' | 'COMPLETED' | 'FAILED' | 'EXPIRED'
 
 export interface CreateQRRequest {
   amount: number

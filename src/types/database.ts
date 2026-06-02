@@ -1,21 +1,21 @@
 // Database schema types for Supabase
 // 開発指針 7.データ設計（最小構成）に基づく型定義
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       transactions: {
-        Row: TransactionRow
-        Insert: TransactionInsert
+        Row: TransactionRow,
+        Insert: TransactionInsert,
         Update: TransactionUpdate
       }
-    }
+    },
     Views: {
       [_ in never]: never
-    }
+    },
     Functions: {
       [_ in never]: never
-    }
+    },
     Enums: {
       transaction_status: 'CREATED' | 'COMPLETED' | 'FAILED' | 'EXPIRED'
     }
@@ -23,7 +23,7 @@ export interface Database {
 }
 
 // Transactions テーブル（開発指針 7.データ設計）
-export interface TransactionRow {
+export type TransactionRow = {
   id: string                    // uuid (主キー)
   tenant_id: string | null      // uuid (事業者ID - SaaS化用)
   merchant_payment_id: string   // text (PayPayへ渡す一意の取引ID)
@@ -35,7 +35,7 @@ export interface TransactionRow {
   paid_at: string | null        // timestamptz (支払い完了日時)
 }
 
-export interface TransactionInsert {
+export type TransactionInsert = {
   id?: string
   tenant_id?: string | null
   merchant_payment_id: string
@@ -47,7 +47,7 @@ export interface TransactionInsert {
   paid_at?: string | null
 }
 
-export interface TransactionUpdate {
+export type TransactionUpdate = {
   id?: string
   tenant_id?: string | null
   merchant_payment_id?: string

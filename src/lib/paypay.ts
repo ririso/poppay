@@ -29,39 +29,54 @@ export interface CreateQRCodeRequest {
 }
 
 export class PayPayService {
-  static async createQRCode({ amount, description, tenantId }: CreateQRCodeRequest): Promise<PayPayCreateQRResponse & { merchantPaymentId: string }> {
-    const merchantPaymentId = uuidv4();
+  /**
+   * トランザクション記録を作成
+   */
+  static async createTransaction(data: {
+    merchantPaymentId: string;
+    amount: number;
+    description: string;
+    tenantId?: string;
+  }): Promise<{ success: true; merchantPaymentId: string }> {
     const supabase = createSupabaseAdmin();
 
-    // Create transaction record in database first
     try {
-      const { error: insertError } = await supabase
+      const { error } = await supabase
         .from('transactions')
         .insert({
-          merchant_payment_id: merchantPaymentId,
-          amount,
-          description,
+          merchant_payment_id: data.merchantPaymentId,
+          amount: data.amount,
+          description: data.description,
           status: 'CREATED' as TransactionStatus,
-          tenant_id: tenantId || DEFAULT_TENANT_ID,
+          tenant_id: data.tenantId || DEFAULT_TENANT_ID,
         });
 
-      if (insertError) {
-        console.error('Database insert error:', insertError);
+      if (error) {
         throw new Error('Failed to create transaction record');
       }
-    } catch (dbError) {
-      console.error('Database operation failed:', dbError);
-      // Continue with PayPay API call even if DB fails (for development)
-    }
 
+      return { success: true, merchantPaymentId: data.merchantPaymentId };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * PayPay QRコード生成
+   */
+  static async generatePayPayQR(data: {
+    merchantPaymentId: string;
+    amount: number;
+    description: string;
+  }): Promise<PayPayCreateQRResponse> {
     const payload: PayPayCreateQRRequest = {
-      merchantPaymentId,
+      merchantPaymentId: data.merchantPaymentId,
       codeType: 'ORDER_QR',
       amount: {
-        amount,
+        amount: data.amount,
         currency: 'JPY',
       },
-      orderDescription: description,
+      orderDescription: data.description,
       isAuthorization: false,
       redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
       redirectType: 'WEB_LINK',
@@ -69,38 +84,95 @@ export class PayPayService {
 
     try {
       const response = await PAYPAY.QRCodeCreate(payload);
+      return response;
+    } catch (error) {
+      throw new Error('Failed to create PayPay QR code');
+    }
+  }
 
-      // Update transaction with PayPay code ID
-      try {
-        await supabase
-          .from('transactions')
-          .update({
-            paypay_code_id: response.data?.codeId,
-          })
-          .eq('merchant_payment_id', merchantPaymentId);
-      } catch (updateError) {
-        console.warn('Failed to update transaction with PayPay code ID:', updateError);
+  /**
+   * PayPayデータでトランザクション更新
+   */
+  static async updateTransactionWithPayPay(data: {
+    merchantPaymentId: string;
+    payPayCodeId: string;
+    status?: 'COMPLETED' | 'FAILED';
+    paidAt?: string;
+  }): Promise<{ success: true }> {
+    const supabase = createSupabaseAdmin();
+
+    try {
+      const updateData: any = {
+        paypay_code_id: data.payPayCodeId,
+      };
+
+      if (data.status) {
+        updateData.status = data.status;
       }
 
+      if (data.paidAt) {
+        updateData.paid_at = data.paidAt;
+      }
+
+      const { error } = await supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('merchant_payment_id', data.merchantPaymentId);
+
+      if (error) {
+        throw new Error('Failed to update transaction with PayPay data');
+      }
+
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * リファクタリング後のQRコード作成（統合メソッド）
+   */
+  static async createQRCode({ amount, description, tenantId }: CreateQRCodeRequest): Promise<PayPayCreateQRResponse & { merchantPaymentId: string }> {
+    const merchantPaymentId = uuidv4();
+
+    try {
+      // Step 1: Create transaction
+      await PayPayService.createTransaction({
+        merchantPaymentId,
+        amount,
+        description,
+        tenantId,
+      });
+
+      // Step 2: Generate PayPay QR
+      const payPayResponse = await PayPayService.generatePayPayQR({
+        merchantPaymentId,
+        amount,
+        description,
+      });
+
+      // Step 3: Update transaction with PayPay data
+      await PayPayService.updateTransactionWithPayPay({
+        merchantPaymentId,
+        payPayCodeId: payPayResponse.data?.codeId || '',
+      });
+
       return {
-        ...response,
+        ...payPayResponse,
         merchantPaymentId,
       };
     } catch (error) {
-      // Update transaction status to FAILED
+      // On error, attempt to update transaction status to FAILED
       try {
-        await supabase
-          .from('transactions')
-          .update({
-            status: 'FAILED' as TransactionStatus,
-          })
-          .eq('merchant_payment_id', merchantPaymentId);
+        await PayPayService.updateTransactionWithPayPay({
+          merchantPaymentId,
+          payPayCodeId: '',
+          status: 'FAILED',
+        });
       } catch (updateError) {
         console.warn('Failed to update failed transaction status:', updateError);
       }
-
-      console.error('PayPay QR creation error:', error);
-      throw new Error('Failed to create PayPay QR code');
+      throw error;
     }
   }
 
