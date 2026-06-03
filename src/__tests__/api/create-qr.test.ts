@@ -2,10 +2,13 @@ import { POST } from '@/app/api/payments/create-qr/route'
 import { PayPayService } from '@/lib/paypay'
 import { NextRequest } from 'next/server'
 import QRCode from 'qrcode'
+import { isApiError, isApiSuccess } from '@/lib/client-error-handler'
+import { ErrorCategory, ErrorCodes } from '@/types/errors'
 
 // Mock dependencies
 jest.mock('@/lib/paypay')
 jest.mock('qrcode')
+jest.mock('@/lib/logger')
 
 describe('/api/payments/create-qr', () => {
   const mockPayPayService = PayPayService as jest.Mocked<typeof PayPayService>
@@ -59,13 +62,17 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(200)
-      expect(responseData).toEqual({
+      expect(isApiSuccess(responseData)).toBe(true)
+      expect(responseData).toMatchObject({
         success: true,
-        merchantPaymentId: 'test-merchant-id',
-        qrCode: 'data:image/png;base64,mockQRCode',
-        codeUrl: 'paypay://payment?code=test',
-        amount: 1000,
-        description: 'Test payment',
+        data: {
+          merchantPaymentId: 'test-merchant-id',
+          qrCode: 'data:image/png;base64,mockQRCode',
+          codeUrl: 'paypay://payment?code=test',
+          amount: 1000,
+          description: 'Test payment',
+        },
+        timestamp: expect.any(String),
       })
 
       expect(mockPayPayService.createQRCode).toHaveBeenCalledWith({
@@ -96,7 +103,9 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toContain('Number must be greater than 0')
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.VALIDATION)
+      expect(responseData.error.message).toContain('金額は正の数値を入力してください')
       expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
     })
 
@@ -111,7 +120,9 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toContain('Number must be greater than 0')
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.VALIDATION)
+      expect(responseData.error.message).toContain('金額は1円以上である必要があります')
       expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
     })
 
@@ -126,7 +137,9 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toContain('Number must be greater than 0')
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.VALIDATION)
+      expect(responseData.error.message).toContain('金額は正の数値を入力してください')
       expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
     })
 
@@ -141,43 +154,71 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toBe('金額は100万円以下で入力してください')
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.VALIDATION)
+      expect(responseData.error.message).toBe('金額は100万円以下で入力してください')
       expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
     })
 
-    it('should reject request with missing description', async () => {
+    it('should accept request with missing description (uses default)', async () => {
       const requestBody = {
         amount: 1000,
       }
 
+      const mockPayPayResponse = {
+        resultInfo: { code: 'SUCCESS', message: 'Success' },
+        data: {
+          url: 'paypay://payment?code=test',
+          merchantPaymentId: 'test-merchant-id',
+        },
+        merchantPaymentId: 'test-merchant-id',
+      }
+
+      mockPayPayService.createQRCode.mockResolvedValue(mockPayPayResponse)
+      mockQRCode.toDataURL.mockResolvedValue('data:image/png;base64,mockQRCode')
+
       const request = createRequest(requestBody)
       const response = await POST(request)
-      const responseData = await response.json()
 
-      expect(response.status).toBe(400)
-      expect(responseData.error).toBe('説明文を入力してください')
-      expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
+      expect(response.status).toBe(200)
+      expect(mockPayPayService.createQRCode).toHaveBeenCalledWith({
+        amount: 1000,
+        description: 'PayPay決済',
+      })
     })
 
-    it('should reject request with empty description', async () => {
+    it('should accept request with empty description (uses default)', async () => {
       const requestBody = {
         amount: 1000,
         description: '',
       }
 
+      const mockPayPayResponse = {
+        resultInfo: { code: 'SUCCESS', message: 'Success' },
+        data: {
+          url: 'paypay://payment?code=test',
+          merchantPaymentId: 'test-merchant-id',
+        },
+        merchantPaymentId: 'test-merchant-id',
+      }
+
+      mockPayPayService.createQRCode.mockResolvedValue(mockPayPayResponse)
+      mockQRCode.toDataURL.mockResolvedValue('data:image/png;base64,mockQRCode')
+
       const request = createRequest(requestBody)
       const response = await POST(request)
-      const responseData = await response.json()
 
-      expect(response.status).toBe(400)
-      expect(responseData.error).toBe('説明文を入力してください')
-      expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
+      expect(response.status).toBe(200)
+      expect(mockPayPayService.createQRCode).toHaveBeenCalledWith({
+        amount: 1000,
+        description: 'PayPay決済',
+      })
     })
 
     it('should reject request with description too long', async () => {
       const requestBody = {
         amount: 1000,
-        description: 'a'.repeat(257),
+        description: 'a'.repeat(101),
       }
 
       const request = createRequest(requestBody)
@@ -185,7 +226,9 @@ describe('/api/payments/create-qr', () => {
       const responseData = await response.json()
 
       expect(response.status).toBe(400)
-      expect(responseData.error).toBe('説明文は256文字以下で入力してください')
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.VALIDATION)
+      expect(responseData.error.message).toBe('説明文は100文字以下で入力してください')
       expect(mockPayPayService.createQRCode).not.toHaveBeenCalled()
     })
 
@@ -220,7 +263,7 @@ describe('/api/payments/create-qr', () => {
     it('should accept maximum valid description length', async () => {
       const requestBody = {
         amount: 1000,
-        description: 'a'.repeat(256),
+        description: 'a'.repeat(100),
       }
 
       const mockPayPayResponse = {
@@ -261,8 +304,10 @@ describe('/api/payments/create-qr', () => {
       const response = await POST(request)
       const responseData = await response.json()
 
-      expect(response.status).toBe(500)
-      expect(responseData.error).toBe('PayPay QRコード生成に失敗しました')
+      expect(response.status).toBe(502)
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.PAYPAY_API)
+      expect(responseData.error.message).toContain('PayPay')
       expect(mockQRCode.toDataURL).not.toHaveBeenCalled()
     })
 
@@ -274,17 +319,14 @@ describe('/api/payments/create-qr', () => {
 
       mockPayPayService.createQRCode.mockRejectedValue(new Error('PayPay SDK error'))
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-
       const request = createRequest(requestBody)
       const response = await POST(request)
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('QRコード生成中にエラーが発生しました')
-      expect(consoleSpy).toHaveBeenCalledWith('API Error:', expect.any(Error))
-
-      consoleSpy.mockRestore()
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.INTERNAL)
+      expect(responseData.error.message).toContain('サーバー')
     })
   })
 
@@ -307,17 +349,14 @@ describe('/api/payments/create-qr', () => {
       mockPayPayService.createQRCode.mockResolvedValue(mockPayPayResponse)
       mockQRCode.toDataURL.mockRejectedValue(new Error('QR code generation failed'))
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-
       const request = createRequest(requestBody)
       const response = await POST(request)
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('QRコード生成中にエラーが発生しました')
-      expect(consoleSpy).toHaveBeenCalledWith('API Error:', expect.any(Error))
-
-      consoleSpy.mockRestore()
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.INTERNAL)
+      expect(responseData.error.message).toContain('サーバー')
     })
   })
 
@@ -331,15 +370,13 @@ describe('/api/payments/create-qr', () => {
         },
       })
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-
       const response = await POST(request)
       const responseData = await response.json()
 
       expect(response.status).toBe(500)
-      expect(responseData.error).toBe('QRコード生成中にエラーが発生しました')
-
-      consoleSpy.mockRestore()
+      expect(isApiError(responseData)).toBe(true)
+      expect(responseData.error.category).toBe(ErrorCategory.INTERNAL)
+      expect(responseData.error.message).toContain('サーバー')
     })
   })
 })

@@ -7,55 +7,15 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-// LoadingSpinnerコンポーネントのインポート（実装後に利用可能）
-// import { LoadingSpinner } from '@/components/LoadingSpinner';
-
-// モック：実装前はコンポーネントをモック
-const MockLoadingSpinner = ({
-  text,
-  size = 'medium',
-  color = 'text-blue-600'
-}: {
-  text?: string;
-  size?: 'small' | 'medium' | 'large';
-  color?: string;
-}) => (
-  <div
-    className={`flex items-center ${color}`}
-    data-testid="loading-spinner"
-    role="status"
-    aria-label={text || "読み込み中"}
-  >
-    <svg
-      className={`animate-spin ${size === 'small' ? 'h-4 w-4' : size === 'large' ? 'h-6 w-6' : 'h-5 w-5'} mr-3`}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
-    {text && <span className="text-sm">{text}</span>}
-  </div>
-);
+// LoadingSpinnerコンポーネントのインポート
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 describe('LoadingSpinner', () => {
   describe('Basic rendering', () => {
     it('should render loading spinner with default props', () => {
       // Given: デフォルトプロパティ
       // When: LoadingSpinnerをレンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: スピナーが表示される
       const spinner = screen.getByTestId('loading-spinner');
@@ -69,7 +29,7 @@ describe('LoadingSpinner', () => {
       const customText = "生成中...";
 
       // When: テキスト付きでレンダリング
-      render(<MockLoadingSpinner text={customText} />);
+      render(<LoadingSpinner text={customText} />);
 
       // Then: カスタムテキストが表示される
       expect(screen.getByText(customText)).toBeInTheDocument();
@@ -79,7 +39,7 @@ describe('LoadingSpinner', () => {
     it('should render without text when not provided', () => {
       // Given: テキストなし
       // When: LoadingSpinnerをレンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: テキストスパンが存在しない
       const spinner = screen.getByTestId('loading-spinner');
@@ -92,7 +52,7 @@ describe('LoadingSpinner', () => {
     it('should render small size spinner', () => {
       // Given: small サイズ
       // When: small サイズでレンダリング
-      render(<MockLoadingSpinner size="small" />);
+      render(<LoadingSpinner size="small" />);
 
       // Then: 小さいサイズのクラスが適用される
       const svg = screen.getByTestId('loading-spinner').querySelector('svg');
@@ -102,7 +62,7 @@ describe('LoadingSpinner', () => {
     it('should render medium size spinner by default', () => {
       // Given: サイズ指定なし（デフォルト）
       // When: LoadingSpinnerをレンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: 中サイズのクラスが適用される
       const svg = screen.getByTestId('loading-spinner').querySelector('svg');
@@ -112,7 +72,7 @@ describe('LoadingSpinner', () => {
     it('should render large size spinner', () => {
       // Given: large サイズ
       // When: large サイズでレンダリング
-      render(<MockLoadingSpinner size="large" />);
+      render(<LoadingSpinner size="large" />);
 
       // Then: 大きいサイズのクラスが適用される
       const svg = screen.getByTestId('loading-spinner').querySelector('svg');
@@ -124,7 +84,7 @@ describe('LoadingSpinner', () => {
     it('should apply default blue color', () => {
       // Given: カラー指定なし
       // When: LoadingSpinnerをレンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: デフォルトの青色クラスが適用される
       const spinner = screen.getByTestId('loading-spinner');
@@ -136,7 +96,7 @@ describe('LoadingSpinner', () => {
       const customColor = "text-green-600";
 
       // When: カスタムカラーでレンダリング
-      render(<MockLoadingSpinner color={customColor} />);
+      render(<LoadingSpinner color={customColor} />);
 
       // Then: カスタムカラークラスが適用される
       const spinner = screen.getByTestId('loading-spinner');
@@ -148,7 +108,7 @@ describe('LoadingSpinner', () => {
     it('should have spinning animation class', () => {
       // Given: LoadingSpinner
       // When: レンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: アニメーションクラスが適用される
       const svg = screen.getByTestId('loading-spinner').querySelector('svg');
@@ -158,7 +118,7 @@ describe('LoadingSpinner', () => {
     it('should have correct SVG structure', () => {
       // Given: LoadingSpinner
       // When: レンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: SVG構造が正しい
       const svg = screen.getByTestId('loading-spinner').querySelector('svg');
@@ -176,7 +136,7 @@ describe('LoadingSpinner', () => {
     it('should have proper opacity classes for visual effect', () => {
       // Given: LoadingSpinner
       // When: レンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: 適切な透明度クラスが設定される
       const circle = screen.getByTestId('loading-spinner').querySelector('circle');
@@ -191,7 +151,7 @@ describe('LoadingSpinner', () => {
     it('should have proper ARIA attributes', () => {
       // Given: LoadingSpinner
       // When: レンダリング
-      render(<MockLoadingSpinner />);
+      render(<LoadingSpinner />);
 
       // Then: 適切なARIA属性が設定される
       const spinner = screen.getByTestId('loading-spinner');
@@ -204,7 +164,7 @@ describe('LoadingSpinner', () => {
       const customText = "支払いを監視中...";
 
       // When: カスタムテキスト付きでレンダリング
-      render(<MockLoadingSpinner text={customText} />);
+      render(<LoadingSpinner text={customText} />);
 
       // Then: カスタムテキストがaria-labelに使用される
       const spinner = screen.getByTestId('loading-spinner');
@@ -214,7 +174,7 @@ describe('LoadingSpinner', () => {
     it('should be discoverable by screen readers', () => {
       // Given: LoadingSpinner
       // When: レンダリング
-      render(<MockLoadingSpinner text="読み込み中" />);
+      render(<LoadingSpinner text="読み込み中" />);
 
       // Then: スクリーンリーダーで発見可能
       const statusElement = screen.getByRole('status');
@@ -229,7 +189,7 @@ describe('LoadingSpinner', () => {
       // When: ボタン内にLoadingSpinnerを配置
       render(
         <button disabled>
-          <MockLoadingSpinner size="small" text="生成中..." />
+          <LoadingSpinner size="small" text="生成中..." />
         </button>
       );
 
@@ -246,7 +206,7 @@ describe('LoadingSpinner', () => {
       // When: ステータス表示でLoadingSpinnerを使用
       render(
         <div className="bg-blue-50 p-4 rounded-lg">
-          <MockLoadingSpinner color="text-blue-600" text="支払いを監視中..." />
+          <LoadingSpinner color="text-blue-600" text="支払いを監視中..." />
         </div>
       );
 
@@ -263,7 +223,7 @@ describe('LoadingSpinner', () => {
       // Given: 決済フォームでの使用
       // When: フォームローディング状態でLoadingSpinnerを使用
       render(
-        <MockLoadingSpinner text="QRコード生成中..." />
+        <LoadingSpinner text="QRコード生成中..." />
       );
 
       // Then: 決済フォーム用のローディング表示として機能
@@ -275,7 +235,7 @@ describe('LoadingSpinner', () => {
       // Given: 状態監視での使用
       // When: 監視状態でLoadingSpinnerを使用
       render(
-        <MockLoadingSpinner color="text-blue-600" text="支払いを監視中..." />
+        <LoadingSpinner color="text-blue-600" text="支払いを監視中..." />
       );
 
       // Then: 状態監視用のローディング表示として機能
@@ -288,14 +248,14 @@ describe('LoadingSpinner', () => {
       // Given: 複数箇所での一貫した使用
       // When: 異なる場所で同じLoadingSpinnerを使用
       const { rerender } = render(
-        <MockLoadingSpinner size="small" color="text-gray-600" />
+        <LoadingSpinner size="small" color="text-gray-600" />
       );
 
       const firstSpinner = screen.getByTestId('loading-spinner');
       const firstSvg = firstSpinner.querySelector('svg');
 
       // 別の場所での使用
-      rerender(<MockLoadingSpinner size="small" color="text-gray-600" />);
+      rerender(<LoadingSpinner size="small" color="text-gray-600" />);
 
       const secondSpinner = screen.getByTestId('loading-spinner');
       const secondSvg = secondSpinner.querySelector('svg');
