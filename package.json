@@ -42,6 +42,7 @@
     "react-hook-form": "^7.48.0",
     "tailwind-merge": "^2.0.0",
     "uuid": "^14.0.0",
+    "winston": "^3.19.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
